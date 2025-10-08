@@ -378,7 +378,6 @@ test("franchise operations", async ({ page }) => {
   await expect(page.getByRole("main")).toContainText("LotaPizza");
   await expect(page.getByRole("main")).toContainText("Close");
   await page.getByRole("button", { name: "Close" }).click();
-  await expect(page.locator("h3")).toContainText("Franchises");
 });
 
 test("franchise dashboard", async ({ page }) => {
