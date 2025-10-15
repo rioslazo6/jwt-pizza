@@ -106,6 +106,54 @@ async function setupPage(page: Page) {
     return await route.fallback();
   });
 
+  await page.route("**/api/user*", async (route) => {
+    const req = route.request();
+    const method = req.method();
+
+    if (method === "GET") {
+      const url = new URL(req.url());
+      const nameFilter = (url.searchParams.get("name") ?? "*")
+        .replace(/\*/g, "")
+        .trim()
+        .toLowerCase();
+      const userList = Object.values(validUsers);
+      const users = !!nameFilter
+        ? userList.filter((user) => user.name?.toLowerCase().includes(nameFilter))
+        : userList;
+      const getUsersRes = {
+        users,
+        more: false,
+      };
+      return await route.fulfill({ json: getUsersRes });
+    }
+    return await route.fallback();
+  });
+
+  await page.route(/\/api\/franchise(\?.*)?$/, async (route) => {
+    const req = route.request();
+    const method = req.method();
+
+    if (method === "GET") {
+      const franchiseRes = {
+        franchises: [
+          {
+            id: 2,
+            name: "LotaPizza",
+            stores: [
+              { id: 4, name: "Lehi" },
+              { id: 5, name: "Springville" },
+              { id: 6, name: "American Fork" },
+            ],
+          },
+          { id: 3, name: "PizzaCorp", stores: [{ id: 7, name: "Spanish Fork" }] },
+          { id: 4, name: "topSpot", stores: [] },
+        ],
+      };
+      return await route.fulfill({ json: franchiseRes });
+    }
+    return await route.fallback();
+  });
+
   await page.goto("/");
 }
 
@@ -297,4 +345,26 @@ test("update admin credentials", async ({ page }) => {
   await page.locator('a[href="/diner-dashboard"]').click();
 
   await expect(page.getByRole("main")).toContainText("Ad Min");
+});
+
+test("see and filter user list", async ({ page }) => {
+  await setupPage(page);
+
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("a");
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await page.getByRole("link", { name: "Admin" }).click();
+  await expect(page.getByRole("main")).toContainText("Users");
+  await expect(page.getByRole("main")).toContainText("Ad Min");
+  await expect(page.getByRole("main")).toContainText("Di Ner");
+  await expect(page.getByRole("main")).toContainText("Fran Chisee");
+
+  await page.getByRole("textbox", { name: "Filter users" }).click();
+  await page.getByRole("textbox", { name: "Filter users" }).fill("min");
+  await page.getByRole("cell", { name: "Submit" }).getByRole("button").first().click();
+  await expect(page.getByRole("main")).toContainText("Ad Min");
+  await expect(page.getByRole("main")).not.toContainText("Di Ner");
+  await expect(page.getByRole("main")).not.toContainText("Fran Chisee");
 });

@@ -76,6 +76,29 @@ async function basicInit(page: Page) {
     await route.fulfill({ json: loggedInUser });
   });
 
+  await page.route("**/api/user*", async (route) => {
+    const req = route.request();
+    const method = req.method();
+
+    if (method === "GET") {
+      const url = new URL(req.url());
+      const nameFilter = (url.searchParams.get("name") ?? "*")
+        .replace(/\*/g, "")
+        .trim()
+        .toLowerCase();
+      const userList = Object.values(validUsers);
+      const users = !!nameFilter
+        ? userList.filter((user) => user.name?.toLowerCase().includes(nameFilter))
+        : userList;
+      const getUsersRes = {
+        users,
+        more: false,
+      };
+      return await route.fulfill({ json: getUsersRes });
+    }
+    return await route.fallback();
+  });
+
   // A standard menu
   await page.route("*/**/api/order/menu", async (route) => {
     const menuRes = [
@@ -341,14 +364,14 @@ test("admin dashboard", async ({ page }) => {
   // Go to admin dashboard
   await page.getByRole("link", { name: "Admin" }).click();
   await expect(page.locator("h2")).toContainText("Mama Ricci's kitchen");
-  await expect(page.locator("h3")).toContainText("Franchises");
+  await expect(page.getByRole("main")).toContainText("Franchises");
   await expect(page.getByRole("button", { name: "Add Franchise" })).toBeVisible();
   await expect(page.getByRole("main")).toContainText("LotaPizza");
   await expect(page.getByRole("main")).toContainText("PizzaCorp");
   await expect(page.getByRole("main")).toContainText("topSpot");
 
   await page.getByPlaceholder("Filter franchises").fill("Corp");
-  await page.getByRole("button", { name: "Submit" }).click();
+  await page.getByRole("button", { name: "Submit" }).nth(1).click();
   await expect(page.getByRole("main")).toContainText("PizzaCorp");
 });
 
@@ -370,7 +393,7 @@ test("franchise operations", async ({ page }) => {
   await page.getByRole("textbox", { name: "franchise name" }).fill("Papa Tom");
   await page.getByRole("textbox", { name: "franchisee admin email" }).fill("a@jwt.com");
   await page.getByRole("button", { name: "Create" }).click();
-  await expect(page.locator("h3")).toContainText("Franchises");
+  await expect(page.getByRole("main")).toContainText("Franchises");
 
   // Close franchise
   await page.getByRole("button", { name: "Close" }).first().click(); // Close first franchise
