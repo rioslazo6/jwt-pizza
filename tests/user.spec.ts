@@ -102,6 +102,14 @@ async function setupPage(page: Page) {
         token: "abcdef",
       };
       return await route.fulfill({ json: updateRes });
+    } else if (method === "DELETE") {
+      const url = new URL(req.url());
+      const userId = Number(decodeURIComponent(url.pathname.split('/').pop() ?? ''));
+      delete validUsers[userId];
+      const deleteRes = {
+        message: "user deleted",
+      };
+      return await route.fulfill({ json: deleteRes });
     }
     return await route.fallback();
   });
@@ -367,4 +375,28 @@ test("see and filter user list", async ({ page }) => {
   await expect(page.getByRole("main")).toContainText("Ad Min");
   await expect(page.getByRole("main")).not.toContainText("Di Ner");
   await expect(page.getByRole("main")).not.toContainText("Fran Chisee");
+});
+
+test("delete user", async ({ page }) => {
+  await setupPage(page);
+  
+  page.on('dialog', async dialog => {
+    await dialog.accept(); // Ensuring "OK" is clicked when prompted to delete user
+  });
+
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).fill("a");
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await page.getByRole("link", { name: "Admin" }).click();
+  await expect(page.getByRole("main")).toContainText("Users");
+  await expect(page.getByRole("main")).toContainText("Ad Min");
+  await expect(page.getByRole("main")).toContainText("Di Ner");
+  await expect(page.getByRole("main")).toContainText("Fran Chisee");
+  
+  await page.getByRole('row', { name: 'Di Ner d@jwt.com diner Delete' }).getByRole('button').click();
+  await expect(page.getByRole("main")).toContainText("Ad Min");
+  await expect(page.getByRole("main")).not.toContainText("Di Ner");
+  await expect(page.getByRole("main")).toContainText("Fran Chisee");
 });

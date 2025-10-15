@@ -123,6 +123,10 @@ class HttpPizzaService implements PizzaService {
     return Promise.resolve(user);
   }
 
+  async deleteUser(user: User): Promise<void> {
+    return this.callEndpoint(`/api/user/${user.id}`, 'DELETE');
+  }
+
   async getUsers(page: number = 0, limit: number = 10, nameFilter: string = '*'): Promise<UserList> {
     return this.callEndpoint(`/api/user?page=${page}&limit=${limit}&name=${nameFilter}`);
   }

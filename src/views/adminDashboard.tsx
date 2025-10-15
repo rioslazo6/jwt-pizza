@@ -32,8 +32,12 @@ export default function AdminDashboard(props: Props) {
     setUserList(await pizzaService.getUsers(userPage, 10, `*${filterUserRef.current?.value}*`));
   }
 
-  async function deleteUser() {
-    // TODO: implement
+  async function deleteUser(user: User) {
+    const confirmed = window.confirm("Are you sure you want to delete this user?");
+    if (confirmed) {
+      await pizzaService.deleteUser(user);
+      setUserList(await pizzaService.getUsers(userPage, 10, `*${filterUserRef.current?.value}*`));
+    }
   }
 
   function createFranchise() {
@@ -84,7 +88,7 @@ export default function AdminDashboard(props: Props) {
                                 {user.roles?.map((role) => role.role).join(", ")}
                               </td>
                               <td className="px-6 py-1 whitespace-nowrap text-end text-sm font-medium">
-                                <button type="button" className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800" onClick={() => deleteUser()}>
+                                <button type="button" className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800" onClick={() => deleteUser(user)}>
                                   <TrashIcon />
                                   Delete
                                 </button>
