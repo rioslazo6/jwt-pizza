@@ -164,7 +164,7 @@
 
 ## Combined Summary of Learnings
 
-Through this penetration testing exercise, we identified that **Input Sanitization** and **Default Credentials** are critical vulnerabilities.
+Through this penetration testing exercise, we identified that Input Sanitization and Default Credentials are critical vulnerabilities. When credentials are left at the default values, companies risk someone with knowledge of how the resource begins easily penetrating all security measures. 
 
 If not handled properly, SQL injection is a powerful attack that can allow malicious actors to obtain or modify user credentials. If a user with an admin role is compromised, attackers can even get full access to the application by exploiting this type of vulnerability. Input sanitization and using parameterized queries are the best ways to prevent SQL injection.
 
